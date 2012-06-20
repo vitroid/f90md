@@ -3,6 +3,7 @@ program clustermd
   use force
   use proceed
   use property
+  use berendsen
   implicit none
   !local variables
   integer :: i
@@ -14,6 +15,7 @@ program clustermd
      call force_to_accel()
      call proceed_velocity(dt)
      call property_kineticenergy()
+     call berendsen_proceed(dt)
      call proceed_position(dt/2)
      if (logging_interval > 0 .and. mod(i,logging_interval) == 0) then
         write(STDOUT,*) i,ep,ek,ep+ek, temperature
