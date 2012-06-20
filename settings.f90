@@ -11,7 +11,6 @@ contains
 
   subroutine settings_read(FILE)
     use property
-    use berendsen
     integer, intent(IN) :: FILE
     !local variables
     character(len=5) :: tag
@@ -30,9 +29,6 @@ contains
        endif
        if(tag == "@AR3A")then
           call property_read_ar3a(FILE)
-       endif
-       if(tag == "@BERE")then
-          call berendsen_read_bere(FILE)
        endif
     enddo
 99  continue

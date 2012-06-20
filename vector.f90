@@ -26,10 +26,4 @@ contains
     vector3_inner_product = sum
   end function vector3_inner_product
 
-  subroutine vector3_scale(this,ratio)
-    type(vector3),intent(inout) :: this
-    real(kind=8),intent(in)     :: ratio
-    this%vec(:) = this%vec(:) * ratio
-  end subroutine vector3_scale
-
 end module vector
