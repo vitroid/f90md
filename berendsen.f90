@@ -7,7 +7,7 @@ contains
 
   subroutine berendsen_read_bere(FILE)
     integer, intent(IN) :: FILE
-    read(FILE,*) temp0, tau   ! set temperature in K, time scale in ps.
+    read(FILE,*) temp0, tau
   end subroutine berendsen_read_bere
 
   ! must be called after property_kineticenergy
