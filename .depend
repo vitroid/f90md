@@ -1,8 +1,9 @@
 # DO NOT DELETE
 
-main.o: proceed.o property.o force.o settings.o 
-settings.o: property.o vector.o 
+main.o: berendsen.o proceed.o property.o force.o settings.o 
+settings.o: berendsen.o property.o vector.o 
 proceed.o: property.o settings.o 
 berendsen.o: property.o 
 property.o: physconst.o vector.o 
+mpi_replica.o: berendsen.o property.o 
 force.o: property.o settings.o 
