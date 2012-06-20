@@ -1,7 +1,7 @@
 # DO NOT DELETE
 
-settings.o: property.o vector.o 
+main.o: proceed.o property.o force.o settings.o 
+settings.o: vector.o 
 proceed.o: property.o settings.o 
-property.o: settings.o vector.o 
-cluster.o: proceed.o property.o force.o settings.o 
+property.o: physconst.o vector.o 
 force.o: property.o settings.o 
