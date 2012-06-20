@@ -1,0 +1,7 @@
+# DO NOT DELETE
+
+settings.o: property.o vector.o 
+proceed.o: property.o settings.o 
+property.o: settings.o vector.o 
+cluster.o: proceed.o property.o force.o settings.o 
+force.o: property.o settings.o 
