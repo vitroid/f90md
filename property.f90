@@ -43,7 +43,7 @@ contains
     enddo
     ! ek in g/mol * (A/ps)^2 == 10 J/mol
     ek = ek * 0.01 ! kJ/mol 3NkbT = 2Ek
-    temperature = ek * 1d3 * 2d0 /(3d0 * num_molecule * kB)
+    temperature = ek * 1d-3 * 2d0 /(3d0 * num_molecule * kB)
   end subroutine property_kineticenergy
 
   subroutine property_scalevelocity(ratio)
