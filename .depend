@@ -1,6 +1,6 @@
 # DO NOT DELETE
 
-main.o: berendsen.o proceed.o property.o force.o settings.o 
+main.o: mpi_replica.o berendsen.o proceed.o property.o force.o settings.o 
 settings.o: berendsen.o property.o vector.o 
 proceed.o: property.o settings.o 
 berendsen.o: property.o 

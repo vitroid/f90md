@@ -10,6 +10,7 @@ module mpi_replica
 contains
 
   subroutine mpi_replica_new
+    use berendsen
     !local variables
     integer :: ierr
     ! start parallel processes.
@@ -21,6 +22,8 @@ contains
     call mpi_comm_size( MPI_COMM_WORLD, NPROCS, ierr )
     ! interval is fixed at now
     exchange_interval = 1000   !md steps
+    ! change temperature settings, for example
+    temp0 = 30d0 * (MYRANK+1) / NPROCS
   end subroutine mpi_replica_new
   
   subroutine mpi_replica_exchange(step)
@@ -58,6 +61,7 @@ contains
              else if ( r < after / before ) then
                 accept = .TRUE.
              endif
+             !write(6,*) "exchange",j,k,mpi_temp0(j),mpi_temp0(k),after/before, accept
              if ( accept ) then
                 tempj = mpi_temp0(j)
                 tempk = mpi_temp0(k)
@@ -69,6 +73,11 @@ contains
        call mpi_scatter(mpi_temp0,1, MPI_REAL8, temp0, 1, MPI_REAL8, ROOT, MPI_COMM_WORLD, ierr)
     endif
   end subroutine mpi_replica_exchange
+
+  subroutine mpi_replica_done
+    integer :: ierr
+    call mpi_finalize(ierr)
+  end subroutine mpi_replica_done
 end module mpi_replica
        
                 
