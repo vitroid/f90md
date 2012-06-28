@@ -1,7 +1,7 @@
+Heat bath
 Verify
 Mixture -> Rigid
 Cutoff -> Pair list -> Grid/Bookkeeper
 Coulomb
-Heat bath
 Pressure control
 semiopen box
