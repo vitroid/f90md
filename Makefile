@@ -5,9 +5,5 @@ all: $(TARGET)
 # $* in the method line is replaced by the matched pattern.
 %: %.f90
 	gfortran $*.f90 -o $*
-depend: 
-	perl ./f90makedepend main.f90 scf.f90 > .depend
 clean:
 	rm $(TARGET) *~ *.o *.mod
-
-include .depend
