@@ -1,3 +1,4 @@
+PREV=040Readability
 TARGET: main scl
 all: $(TARGET)
 #General rule to make FOO from FOO.f90.
@@ -7,3 +8,5 @@ all: $(TARGET)
 	gfortran $*.f90 -o $*
 clean:
 	rm $(TARGET) *~ *.o *.mod
+diff:
+	git diff -U5 --color $(PREV)..HEAD
