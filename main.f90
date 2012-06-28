@@ -12,6 +12,8 @@ program clustermd
   real(kind=8) :: dt                          ! picoseconds
   real(kind=8) :: k
   real(kind=8) :: temperature
+  ! volume in Ang**3, ideal and excess virial in kJ/mol, and pressure in Pa.
+  real(kind=8) :: volume, vir_id, vir_ex, pressure
   !local variables
   integer :: num_loop
   integer :: i,j
@@ -73,6 +75,7 @@ program clustermd
         read(5,*) log_interval
      else if ( tag == "[CUBOIDBOX]" ) then
         read(5,*) (box(i),i=1,3)
+        volume = box(1)*box(2)*box(3)
      end if
   end do
 999 continue
@@ -86,6 +89,8 @@ program clustermd
      !force will be reset each step.
      force(:,1:num_molecule) = 0.0d0
      ep = 0.0
+     !excess virial by interactions
+     vir_ex = 0.0 !kJ/mol
      !interaction between all pairs of molecules
      do j1 = 1,num_molecule
         do j2 = j1+1, num_molecule
@@ -99,8 +104,12 @@ program clustermd
            k  =    - 4*eps*(12*sig**12/dd**7 - 6*sig**6/dd**4) ! kJ/mol/Ang**2
            force(:,j1) = force(:,j1) + k * delta(:)    ! kJ/mol/Ang
            force(:,j2) = force(:,j2) - k * delta(:)
+           do j = 1,3
+              vir_ex = vir_ex + delta(j) * ( -k * delta(j) )
+           enddo
         enddo
      enddo
+     vir_ex = vir_ex / 3.0d0  ! W defined in Allen&Tildesley p.48
      !calculate accel
      !force is in kJ/mol/Angstrom
      !acc is in Angstrom/ps/ps
@@ -130,12 +139,28 @@ program clustermd
      ek = ek * 0.01 ! kJ/mol
      ! 3NkbT = 2Ek
      temperature = ek * 2d0 /(3d0 * num_molecule * 0.008314)
+     if ( box(1) > 0.0 ) then
+        vir_id = 2.0 * ek / 3.0
+        pressure = (vir_id + vir_ex) / volume *1e33 / 6.022e23
+        ! *1.0     ! kJ/mol / A**3
+        ! *1e3     ! J/mol / A**3
+        ! *1e30    ! J/mol / m**3
+        !          ! J / m / mol / m**2
+        !          ! Pa / mol
+        ! /NA      ! Pa
+     endif
+
      lasttime = lasttime + dt
      ! Write not so frequently
      if ( log_interval > 0 .and. mod(i,log_interval) == 0 ) then
-        ! time step in ps, total energies in kJ/mol, temperature in K
-        write(6,'("[LOGV1]")')
-        write(6,*) i,lasttime, ep,ek,ep+ek, temperature
+        ! time step in ps, total energies in kJ/mol, temperature in K, pressure in Pa
+        if ( box(1) > 0.0 ) then
+           write(6,'("[LOGV2]")')
+           write(6,*) i,lasttime, ep,ek,ep+ek, temperature, pressure, volume
+        else
+           write(6,'("[LOGV1]")')
+           write(6,*) i,lasttime, ep,ek,ep+ek, temperature
+        endif
      endif
   enddo
   write(6,'("[INTVPS]")')
