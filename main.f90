@@ -14,6 +14,7 @@ program clustermd
   integer :: i,j
   real(kind=8) :: dx,dy,dz,dd
   real(kind=8) :: ep,ek
+  real(kind=8) :: eps,sig
   x(1) = 0.0d0
   y(1) = 0.0d0
   z(1) = 0.0d0
@@ -33,7 +34,8 @@ program clustermd
   enddo
   dt = 0.001
   mass = 1.0
-  k = 1.0
+  eps = 3.0
+  sig = 3.0
   num_loop = 100000
   do i=1,num_loop
      !calculate force
@@ -42,7 +44,8 @@ program clustermd
      dy = y(2) - y(1)
      dz = z(2) - z(1)
      dd = dx**2 + dy**2 + dz**2
-     ep = ep + k * dd / 2.0
+     ep = 4*eps*(sig**12/dd**6 - sig**6/dd**3)
+     k  =-4*eps*(12*sig**12/dd**7 - 6*sig**6/dd**4)
      fx(1) = +k * dx
      fy(1) = +k * dy
      fz(1) = +k * dz
@@ -72,6 +75,6 @@ program clustermd
      do j=1,2
         ek = ek + mass * (vx(j)**2 + vy(j)**2 + vz(j)**2) / 2.0
      enddo
-     write(6,*) i,ep,ek,ep+ek
+     write(6,*) i,ep,ek,ep+ek,sqrt(dd)
   enddo
 end program clustermd
