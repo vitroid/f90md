@@ -1,12 +1,12 @@
 program clustermd
   implicit none
   !molecular properties
-  !Increase number of molecules
+  !Make arrays allocatable
   integer      :: num_molecule
-  real(kind=8) :: position(3,8)
-  real(kind=8) :: velocity(3,8)
-  real(kind=8) :: accel(3,8)
-  real(kind=8) :: force(3,8)
+  real(kind=8), allocatable :: position(:,:)
+  real(kind=8), allocatable :: velocity(:,:)
+  real(kind=8), allocatable :: accel(:,:)
+  real(kind=8), allocatable :: force(:,:)
   real(kind=8) :: argon_mass
   real(kind=8) :: argon_eps,argon_sig
   real(kind=8) :: dt
@@ -19,19 +19,15 @@ program clustermd
   integer :: j1,j2
   real(kind=8) :: delta(3),dd
   real(kind=8) :: ep,ek
-  i = 0
-  !Place molecules on the lattice.
-  do ix = 1,2
-     do iy = 1,2
-        do iz = 1,2
-           i = i + 1
-           position(1,i) = ix * 4.0d0
-           position(2,i) = iy * 4.0d0
-           position(3,i) = iz * 4.0d0
-        enddo
-     enddo
+  !read number of molecules from file
+  read(5,*) num_molecule
+  allocate(position(3,num_molecule))
+  allocate(velocity(3,num_molecule))
+  allocate(accel(3,num_molecule))
+  allocate(force(3,num_molecule))
+  do i=1,num_molecule
+     read(5,*) (position(j,i),j=1,3)
   enddo
-  num_molecule = i
   velocity(:,1:num_molecule) = 0.0d0
   accel(:,1:num_molecule) = 0.0d0
   dt = 0.001
@@ -40,7 +36,7 @@ program clustermd
   argon_mass = 39.95d0
   argon_eps = 120d0 * 0.008314d0
   argon_sig = 3.41d0
-  num_loop = 100000
+  num_loop = 10000
   do i=1,num_loop
      !calculate force
      !force will be reset each step.
@@ -70,4 +66,12 @@ program clustermd
      enddo
      write(6,*) i,ep,ek,ep+ek
   enddo
+  write(6,*) num_molecule
+  do i=1,num_molecule
+     write(6,*) (position(j,i),j=1,3),(velocity(j,i),j=1,3)
+  enddo
+  deallocate(position)
+  deallocate(velocity)
+  deallocate(accel)
+  deallocate(force)
 end program clustermd
