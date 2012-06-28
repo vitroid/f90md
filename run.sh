@@ -1,3 +1,6 @@
 #!/bin/sh
 
-./scl | ./main
+cp test.head test.input
+./scl >> test.input
+./main < test.input | tee test.output
+

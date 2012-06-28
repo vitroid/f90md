@@ -5,6 +5,7 @@ program simplecubiclattice
   real(kind=8) :: latticeconst
   num_edge = 3
   latticeconst = 4.0
+  write(6,fmt='("[ATOMPOS]")')
   write(6,*) num_edge**3
   !Place molecules on the lattice.
   do ix = 1,num_edge
