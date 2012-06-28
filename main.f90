@@ -21,6 +21,7 @@ program clustermd
   real(kind=8) :: delta(3),dd
   real(kind=8) :: ep,ek
   real(kind=8) :: lasttime
+  real(kind=8) :: box(3)
   character(len=1000) :: tag
   !default values
   dt = 0.001
@@ -30,6 +31,7 @@ program clustermd
   sig = 3.41d0
   lasttime = 0.0d0
   log_interval = 0
+  box(1) = -1d0 ! negative value == no box
   !read various data according to the tags.
   !tags should not be very descriptive. Tags should rather be a symbolic name.
   !You may want to change the data format later.
@@ -69,6 +71,8 @@ program clustermd
         read(5,*) lasttime
      else if ( tag == "[LOGINTV]" ) then
         read(5,*) log_interval
+     else if ( tag == "[CUBOIDBOX]" ) then
+        read(5,*) (box(i),i=1,3)
      end if
   end do
 999 continue
@@ -86,6 +90,10 @@ program clustermd
      do j1 = 1,num_molecule
         do j2 = j1+1, num_molecule
            delta(:) = position(:,j2) - position(:,j1)
+           !minimum image
+           if ( box(1) > 0.0d0 ) then
+              delta(:) = delta(:) - dnint(delta(:) / box(:)) * box(:)
+           endif
            dd = delta(1)**2 + delta(2)**2 + delta(3)**2
            ep = ep + 4*eps*(sig**12/dd**6 - sig**6/dd**3)      ! kJ/mol
            k  =    - 4*eps*(12*sig**12/dd**7 - 6*sig**6/dd**4) ! kJ/mol/Ang**2
@@ -142,6 +150,10 @@ program clustermd
   write(6,*) num_loop
   write(6,'("[LOGINTV]")')
   write(6,*) log_interval
+  if ( box(1) > 0.0d0 ) then
+     write(6,'("[CUBOIDBOX]")')
+     write(6,*) (box(i),i=1,3)
+  endif
   write(6,'("[ATOMPOSVEL]")')
   write(6,*) num_molecule
   do i=1,num_molecule
