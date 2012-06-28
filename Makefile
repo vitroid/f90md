@@ -9,4 +9,4 @@ all: $(TARGET)
 clean:
 	rm $(TARGET) *~ *.o *.mod
 diff:
-	git diff -U5 --color $(PREV)..HEAD
+	git diff -U5 --color $(PREV)
