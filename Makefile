@@ -5,4 +5,4 @@ main: main.f90
 clean:
 	rm main *~ *.o *.mod
 diff:
-	git diff -U5 --color $(PREV)..HEAD
+	git diff -U5 --color $(PREV)
