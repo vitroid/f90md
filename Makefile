@@ -1,5 +1,5 @@
 PREV=040Readability
-TARGET: main scl
+TARGET=main scl
 all: $(TARGET)
 #General rule to make FOO from FOO.f90.
 # % in rule line is the matching pattern for file name.
@@ -9,4 +9,4 @@ all: $(TARGET)
 clean:
 	rm $(TARGET) *~ *.o *.mod
 diff:
-	git diff -U5 --color $(PREV)..HEAD
+	git diff -U5 --color $(PREV)
