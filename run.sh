@@ -2,5 +2,5 @@
 
 cp test.head test.input
 ./scl >> test.input
-./main < test.input | tee test.output
+./main < test.input
 
