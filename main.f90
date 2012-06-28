@@ -334,12 +334,12 @@ program main
   integer      :: i
   character(len=1000) :: tag
   !default values
-  call box_init()
-  call physconst_init()
-  call properties_init()
-  call integrator_init()
-  call force_init()
-  call settings_init()
+  call box_init
+  call physconst_init
+  call properties_init
+  call integrator_init
+  call force_init
+  call settings_init
   do
      read(STDIN,*,end=999) tag
      call properties_read(tag, STDIN)
@@ -351,14 +351,16 @@ program main
   !realistic interaction parameters for Argon.
   do i=1,num_loop
      lasttime = lasttime + dt
+     !calculate position
+     call integrator_proceed_position(dt/2)
      !calculate force
      call force_calculate(ep, vir_ex)
      !calculate accel
-     call properties_accel_from_force()
+     call properties_accel_from_force
      !calculate velocity
      call integrator_proceed_velocity(dt)
      !calculate position
-     call integrator_proceed_position(dt)
+     call integrator_proceed_position(dt/2)
      ! logging
      call settings_write_log(i, ep, vir_ex, STDOUT)
   enddo
@@ -366,5 +368,5 @@ program main
   call settings_write(STDOUT)
   call properties_write(STDOUT)
   !deallocate arrays
-  call properties_done()
+  call properties_done
 end program main

@@ -1,4 +1,4 @@
-PREV=090Pressure
+PREV=100Modular
 TARGET=main scl
 all: $(TARGET)
 #General rule to make FOO from FOO.f90.
