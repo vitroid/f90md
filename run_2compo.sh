@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cat <<EOF > test.input
+cat <<EOF > 2compo.input
 [INTRPAIR]
 1 1 LJ
 0.99768d0 3.41d0
@@ -16,6 +16,6 @@ cat <<EOF > test.input
 [LOGINTV]
 1000
 EOF
-./gen_2compo >> test.input
-./main < test.input
+./gen_2compo >> 2compo.input
+./main < 2compo.input
 
