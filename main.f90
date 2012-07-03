@@ -1,3 +1,10 @@
+module system_module
+  implicit none
+  !system constants
+  integer, parameter :: STDIN = 5, STDOUT = 6, STDERR = 7
+end module system_module
+
+
 module box_module
   implicit none
   real(kind=8) :: box(3), volume
@@ -45,95 +52,209 @@ module physconst_module
   real(kind=8), parameter :: NA = 6.022d23
 contains
   subroutine physconst_init
+    !reserved for future extension
   end subroutine physconst_init
 
 end module physconst_module
 
 
 
-module properties_module
+module monatom_module
   implicit none
-  integer      :: num_molecule
-  real(kind=8), allocatable :: position(:,:)  ! Angstrom
-  real(kind=8), allocatable :: velocity(:,:)  ! Angstrom / ps
-  real(kind=8), allocatable :: accel(:,:)     ! Angstrom / ps**2
-  real(kind=8), allocatable :: force(:,:)     ! N
-  real(kind=8) :: mass                        ! atomic mass
+  type monatom
+     integer      :: num_molecule
+     real(kind=8), pointer, dimension(:,:) :: position  ! Angstrom
+     real(kind=8), pointer, dimension(:,:) :: velocity  ! Angstrom / ps
+     real(kind=8), pointer, dimension(:,:) :: accel     ! Angstrom / ps**2
+     real(kind=8), pointer, dimension(:,:) :: force     ! N
+     real(kind=8) :: mass                        ! atomic mass
+  end type monatom
 
 contains
 
-  subroutine properties_init
-    mass = 39.95d0
-  end subroutine properties_init
+  subroutine monatom_allocate(m, nmol)
+    type(monatom), intent(OUT) :: m
+    integer, intent(IN) :: nmol
+    m%num_molecule = nmol
+    allocate(m%position(3,nmol))
+    allocate(m%velocity(3,nmol))
+    allocate(m%accel(3,nmol))
+    allocate(m%force(3,nmol))
+  end subroutine monatom_allocate
 
 
-  subroutine properties_read(tag, filehandle)
-    character(len=*), intent(IN) :: tag
-    integer, intent(IN)          :: filehandle
-    integer                      :: i,j
-    if ( tag == "[ATOMPOS]" ) then
-       read(filehandle,*) num_molecule
-       allocate(position(3,num_molecule))
-       allocate(velocity(3,num_molecule))
-       allocate(accel(3,num_molecule))
-       allocate(force(3,num_molecule))
-       do i=1,num_molecule
-          read(filehandle,*) (position(j,i),j=1,3)   ! coordinates in Angstrom
-       enddo
-       velocity(:,1:num_molecule) = 0.0d0
-    else if ( tag == "[ATOMPOSVEL]" ) then
-       read(filehandle,*) num_molecule
-       allocate(position(3,num_molecule))
-       allocate(velocity(3,num_molecule))
-       allocate(accel(3,num_molecule))
-       allocate(force(3,num_molecule))
-       do i=1,num_molecule
-          read(filehandle,*) (position(j,i),j=1,3),(velocity(j,i),j=1,3)
-       enddo
-    else if ( tag == "[ATOMMAS]" ) then
-       read(filehandle,*) mass
-    end if
-  end subroutine properties_read
+  subroutine monatom_done(m)
+    type(monatom), intent(INOUT) :: m
+    deallocate(m%position)
+    deallocate(m%velocity)
+    deallocate(m%accel)
+    deallocate(m%force)
+  end subroutine monatom_done
 
 
-  subroutine properties_write(filehandle)
+  subroutine monatom_resetforce(m)
+    type(monatom), intent(INOUT) :: m
+    m%force(:,:) = 0d0
+  end subroutine monatom_resetforce
+
+
+  subroutine monatom_proceed_velocity(m, deltat)
+    type(monatom), intent(INOUT) :: m
+    real(kind=8), intent(IN) :: deltat
+    m%velocity(:,1:m%num_molecule) = m%velocity(:,1:m%num_molecule) + m%accel(:,1:m%num_molecule)*deltat
+  end subroutine monatom_proceed_velocity
+
+
+  subroutine monatom_proceed_position(m, deltat)
+    type(monatom), intent(INOUT) :: m
+    real(kind=8), intent(IN) :: deltat
+    m%position(:,1:m%num_molecule) = m%position(:,1:m%num_molecule) + m%velocity(:,1:m%num_molecule)*deltat
+  end subroutine monatom_proceed_position
+
+
+  subroutine monatom_write(m,filehandle)
+    type(monatom), intent(IN) :: m
     integer, intent(IN) :: filehandle
     integer :: i,j
     write(filehandle,'("[ATOMMAS]")')
-    write(filehandle,*) mass
+    write(filehandle,*) m%mass
     write(filehandle,'("[ATOMPOSVEL]")')
-    write(filehandle,*) num_molecule
-    do i=1,num_molecule
-       write(filehandle,*) (position(j,i),j=1,3),(velocity(j,i),j=1,3)
+    write(filehandle,*) m%num_molecule
+    do i=1,m%num_molecule
+       write(filehandle,*) (m%position(j,i),j=1,3),(m%velocity(j,i),j=1,3)
     enddo
-  end subroutine properties_write
+  end subroutine monatom_write
 
 
-  subroutine properties_accel_from_force()
-    accel(:,1:num_molecule) = force(:,1:num_molecule) / mass * 100.0
-  end subroutine properties_accel_from_force
+  subroutine monatom_accel_from_force(m)
+    type(monatom), intent(INOUT) :: m
+    m%accel(:,1:m%num_molecule) = m%force(:,1:m%num_molecule) / m%mass * 100.0
+  end subroutine monatom_accel_from_force
 
 
-  function properties_kinetic_energy() result(ek)
+  function monatom_kinetic_energy(m) result(ek)
+    type(monatom), intent(IN) :: m
     real(kind=8) :: ek
     integer      :: j
     ek = 0.0
-    do j=1,num_molecule
-       ek = ek + mass * (velocity(1,j)**2 + velocity(2,j)**2 + velocity(3,j)**2) / 2.0
+    do j=1,m%num_molecule
+       ek = ek + m%mass * (m%velocity(1,j)**2 + m%velocity(2,j)**2 + m%velocity(3,j)**2) / 2.0
     enddo
     ! (g/mol) * (A/ps)**2
     ! = (g A**2 / ps**2) / mol
     ! = (1e-23 kg m**2/ (1e-24 s**2) / mol
     ! = 10 J/mol
     ek = ek * 0.01 ! kJ/mol
+  end function monatom_kinetic_energy
+
+
+  function monatom_degree_of_freedom(m) result(dof)
+    type(monatom), intent(INOUT) :: m
+    integer :: dof
+    dof = m%num_molecule * 3
+  end function monatom_degree_of_freedom
+
+
+  subroutine monatom_read_atomposvel(m, filehandle)
+    type(monatom), intent(INOUT) :: m
+    integer, intent(IN) :: filehandle
+    integer :: i,j
+    do i=1,m%num_molecule
+       read(filehandle,*) (m%position(j,i),j=1,3), (m%velocity(j,i),j=1,3)
+    enddo
+  end subroutine monatom_read_atomposvel
+
+
+  subroutine monatom_read_atompos(m, filehandle)
+    type(monatom), intent(INOUT) :: m
+    integer, intent(IN) :: filehandle
+    integer :: i,j
+    do i=1,m%num_molecule
+       read(filehandle,*) (m%position(j,i),j=1,3)
+    enddo
+    m%velocity(:,1:m%num_molecule) = 0.0d0
+  end subroutine monatom_read_atompos
+
+end module monatom_module
+
+
+module properties_module
+  use monatom_module
+  implicit none
+  integer :: num_monatom
+  type(monatom) :: monatoms(100)
+  character(len=256) :: label(100)
+contains
+
+  subroutine properties_init
+    num_monatom = 0
+  end subroutine properties_init
+
+  subroutine properties_read(tag, filehandle)
+    character(len=*), intent(IN) :: tag
+    integer, intent(IN)          :: filehandle
+    integer                      :: nmol
+    if ( tag == "[COMPONENT]" ) then
+       num_monatom = num_monatom + 1
+       read(filehandle,*) label(num_monatom)
+    else if ( tag == "[ATOMPOS]" ) then
+       read(filehandle,*) nmol
+       call monatom_allocate(monatoms(num_monatom), nmol)
+       call monatom_read_atompos(monatoms(num_monatom), filehandle)
+    else if ( tag == "[ATOMPOSVEL]" ) then
+       read(filehandle,*) nmol
+       call monatom_allocate(monatoms(num_monatom), nmol)
+       call monatom_read_atomposvel(monatoms(num_monatom), filehandle)
+    else if ( tag == "[ATOMMAS]" ) then
+       read(filehandle,*) monatoms(num_monatom)%mass
+    end if
+  end subroutine properties_read
+
+
+  subroutine properties_write(filehandle)
+    integer, intent(IN) :: filehandle
+    integer :: k
+    do k=1,num_monatom
+       write(filehandle,'("[COMPONENT]")')
+       write(filehandle,'(a)') label(k)
+       call monatom_write(monatoms(k), filehandle)
+    end do
+  end subroutine properties_write
+
+
+  subroutine properties_accel_from_force
+    integer :: k
+    do k=1,num_monatom
+       call monatom_accel_from_force(monatoms(k))
+    end do
+  end subroutine properties_accel_from_force
+
+
+  function properties_kinetic_energy() result(ek)
+    integer :: k
+    real(kind=8) :: ek
+    ek = 0d0
+    do k=1,num_monatom
+       ek = ek + monatom_kinetic_energy(monatoms(k))
+    end do
   end function properties_kinetic_energy
+
+
+  function properties_degree_of_freedom() result(dof)
+    integer :: k
+    integer :: dof
+    dof = 0d0
+    do k=1,num_monatom
+       dof = dof + monatom_degree_of_freedom(monatoms(k))
+    end do
+  end function properties_degree_of_freedom
 
 
   function properties_temperature(ek) result(temperature)
     use physconst_module
     real(kind=8), intent(IN) :: ek
     real(kind=8)             :: temperature
-    temperature = ek * 2d0 /(3d0 * num_molecule * kB)
+    temperature = ek * 2d0 /(properties_degree_of_freedom() * kB)
   end function properties_temperature
 
 
@@ -149,84 +270,226 @@ contains
     !          ! J / m / mol / m**2
     !          ! Pa / mol
     ! /NA      ! Pa
-   end function properties_pressure
+  end function properties_pressure
 
 
+  subroutine properties_done
+    integer :: k
+    do k=1,num_monatom
+       call monatom_done(monatoms(k))
+    end do
+  end subroutine properties_done
 
 
+  subroutine properties_preforce
+    integer :: k
+    do k=1,num_monatom
+       call monatom_resetforce(monatoms(k))
+    end do
+  end subroutine properties_preforce
 
-   subroutine properties_done
-     deallocate(position)
-     deallocate(velocity)
-     deallocate(accel)
-     deallocate(force)
-   end subroutine properties_done
+
+  subroutine properties_postforce
+  end subroutine properties_postforce
 
 end module properties_module
 
 
 
-module interaction_module
+module lj_module
   implicit none
-  real(kind=8) :: eps,sig                     ! kJ/mol, Angstrom
-
+  type lj
+     real(kind=8) :: eps,sig                     ! kJ/mol, Angstrom
+  end type lj
+  
 contains
 
-  subroutine interaction_init
-    eps = 0.99768d0
-    sig = 3.41d0
-  end subroutine interaction_init
+  subroutine lj_init(x)
+    type(lj), intent(OUT) :: x
+    x%eps = 0.0
+    x%sig = 0.0
+  end subroutine lj_init
 
 
-  subroutine interaction_calculate(ep, vir_ex)
+  function lj_is_available(x) result(logic)
+    type(lj), intent(OUT) :: x
+    logical :: logic
+    logic = x%eps /= 0.0
+  end function lj_is_available
+
+
+  subroutine lj_write(x, filehandle)
+    type(lj), intent(IN) :: x
+    integer, intent(IN) :: filehandle
+    write(filehandle,'("[LJPARAM]")')
+    write(filehandle,*) x%eps,x%sig
+  end subroutine lj_write
+
+
+  subroutine lj_calculate_homo(x, m, ep, vir_ex)
     use properties_module
     use box_module
+    type(lj), intent(IN) :: x
+    type(monatom), intent(INOUT) :: m
     real(kind=8), intent(OUT):: ep,vir_ex
     real(kind=8)             :: delta(3),dd
     real(kind=8)             :: k
     integer :: j1,j2,j
-    !force will be reset each step.
-    force(:,1:num_molecule) = 0.0d0
     ep = 0.0
     !excess virial by interactions
     vir_ex = 0.0 !kJ/mol
     !interaction between all pairs of molecules
-    do j1 = 1,num_molecule
-       do j2 = j1+1, num_molecule
-          delta(:) = position(:,j2) - position(:,j1)
+    do j1 = 1,m%num_molecule
+       do j2 = j1+1, m%num_molecule
+          delta(:) = m%position(:,j2) - m%position(:,j1)
           !minimum image
           if ( box_is_available() ) then
              delta(:) = delta(:) - dnint(delta(:) / box(:)) * box(:)
           endif
           dd = delta(1)**2 + delta(2)**2 + delta(3)**2
-          ep = ep + 4*eps*(sig**12/dd**6 - sig**6/dd**3)      ! kJ/mol
-          k  =    - 4*eps*(12*sig**12/dd**7 - 6*sig**6/dd**4) ! kJ/mol/Ang**2
-          force(:,j1) = force(:,j1) + k * delta(:)    ! kJ/mol/Ang
-          force(:,j2) = force(:,j2) - k * delta(:)
+          ep = ep + 4*x%eps*(x%sig**12/dd**6 - x%sig**6/dd**3)      ! kJ/mol
+          k  =    - 4*x%eps*(12*x%sig**12/dd**7 - 6*x%sig**6/dd**4) ! kJ/mol/Ang**2
+          m%force(:,j1) = m%force(:,j1) + k * delta(:)    ! kJ/mol/Ang
+          m%force(:,j2) = m%force(:,j2) - k * delta(:)
           do j = 1,3
              vir_ex = vir_ex + delta(j) * ( -k * delta(j) )
           enddo
        enddo
     enddo
     vir_ex = vir_ex / 3.0d0  ! W defined in Allen&Tildesley p.48
-  end subroutine interaction_calculate
+  end subroutine lj_calculate_homo
+
+
+  subroutine lj_calculate_hetero(x, m1, m2, ep, vir_ex)
+    use properties_module
+    use box_module
+    type(lj), intent(IN) :: x
+    type(monatom), intent(INOUT) :: m1,m2
+    real(kind=8), intent(OUT):: ep,vir_ex
+    real(kind=8)             :: delta(3),dd
+    real(kind=8)             :: k
+    integer :: j1,j2,j
+    ep = 0.0
+    !excess virial by interactions
+    vir_ex = 0.0 !kJ/mol
+    !interaction between all pairs of molecules
+    do j1 = 1,m1%num_molecule
+       do j2 = 1, m2%num_molecule
+          delta(:) = m2%position(:,j2) - m1%position(:,j1)
+          !minimum image
+          if ( box_is_available() ) then
+             delta(:) = delta(:) - dnint(delta(:) / box(:)) * box(:)
+          endif
+          dd = delta(1)**2 + delta(2)**2 + delta(3)**2
+          ep = ep + 4*x%eps*(x%sig**12/dd**6 - x%sig**6/dd**3)      ! kJ/mol
+          k  =    - 4*x%eps*(12*x%sig**12/dd**7 - 6*x%sig**6/dd**4) ! kJ/mol/Ang**2
+          m1%force(:,j1) = m1%force(:,j1) + k * delta(:)    ! kJ/mol/Ang
+          m2%force(:,j2) = m2%force(:,j2) - k * delta(:)
+          do j = 1,3
+             vir_ex = vir_ex + delta(j) * ( -k * delta(j) )
+          enddo
+       enddo
+    enddo
+    vir_ex = vir_ex / 3.0d0  ! W defined in Allen&Tildesley p.48
+  end subroutine lj_calculate_hetero
+
+
+  subroutine lj_lorentz_berthelot_rule(lj1,lj2,eps,sig)
+    type(lj), intent(IN) :: lj1,lj2
+    real(kind=8), intent(OUT) :: eps, sig
+    eps = sqrt(lj1%eps * lj2%eps)
+    sig = (lj1%sig + lj2%sig)/2d0
+  end subroutine lj_lorentz_berthelot_rule
+
+end module lj_module
+
+
+
+module interaction_module
+  use lj_module
+  implicit none
+  type(lj) :: lj_pair(100,100)
+
+contains
+
+  subroutine interaction_init
+    integer :: i,j
+    do i=1,100
+       do j=1,100
+          call lj_init(lj_pair(i,j))
+       enddo
+    enddo
+  end subroutine interaction_init
 
 
   subroutine interaction_read(tag, filehandle)
+    use system_module
     character(len=*), intent(IN) :: tag
     integer, intent(IN)          :: filehandle
-    if ( tag == "[LJPARAM]" ) then
-       read(filehandle,*) eps,sig
-    end if
+    integer :: i,j
+    character(len=256) :: intrtype
+    real(kind=8) :: eps, sig
+    if ( tag == "[INTRPAIR]" ) then
+       read(filehandle,*) i,j,intrtype
+       if ( intrtype == "LJ" ) then
+          read(filehandle,*) eps,sig
+          lj_pair(i,j)%eps = eps
+          lj_pair(i,j)%sig = sig
+       else if ( intrtype == "LB" ) then
+          call lj_lorentz_berthelot_rule(lj_pair(i,i),lj_pair(j,j),eps,sig)
+          lj_pair(i,j)%eps = eps
+          lj_pair(i,j)%sig = sig
+          lj_pair(j,i)%eps = eps
+          lj_pair(j,i)%sig = sig
+       else
+          write(STDERR,*) "UNKNOWN INTERACTION TYPE:", intrtype
+       endif
+    endif
   end subroutine interaction_read
 
 
   subroutine interaction_write(filehandle)
-    integer, intent(IN) :: filehandle
-    write(filehandle,'("[LJPARAM]")')
-    write(filehandle,*) eps,sig
+    integer, intent(IN)          :: filehandle
+    integer :: i,j
+    do i=1,100
+       do j=i,100
+          if ( lj_is_available(lj_pair(i,j)) ) then
+             write(filehandle,'("[INTRPAIR]")')
+             write(filehandle,*) i,j,'LJ'
+             write(filehandle,*) lj_pair(i,j)%eps, lj_pair(i,j)%sig
+          endif
+       enddo
+    enddo
   end subroutine interaction_write
 
+
+  
+  subroutine interaction_calculate(ep, vir_ex)
+    use properties_module
+    real(kind=8), intent(OUT):: ep,vir_ex
+    real(kind=8)             :: ep1,vir_ex1
+    integer :: k, k1, k2
+    ep = 0.0
+    !excess virial by interactions
+    vir_ex = 0.0 !kJ/mol
+    do k=1,num_monatom
+       if ( lj_is_available(lj_pair(k,k)) ) then
+          call lj_calculate_homo(lj_pair(k,k), monatoms(k), ep1, vir_ex1)
+          ep = ep + ep1
+          vir_ex = vir_ex + vir_ex1
+       endif
+    enddo
+    do k1=1,num_monatom
+       do k2=k1+1,num_monatom
+          if ( lj_is_available(lj_pair(k1,k2)) ) then
+             call lj_calculate_hetero(lj_pair(k1,k2), monatoms(k1), monatoms(k2), ep1, vir_ex1)
+             ep = ep + ep1
+             vir_ex = vir_ex + vir_ex1
+          endif
+       enddo
+    enddo
+  end subroutine interaction_calculate
+       
 end module interaction_module
 
 
@@ -243,14 +506,20 @@ contains
   subroutine integrator_proceed_velocity(deltat)
     use properties_module
     real(kind=8), intent(IN) :: deltat
-    velocity(:,1:num_molecule) = velocity(:,1:num_molecule) + accel(:,1:num_molecule)*deltat
+    integer :: k
+    do k=1,num_monatom
+       call monatom_proceed_velocity(monatoms(k), deltat)
+    end do
   end subroutine integrator_proceed_velocity
 
 
   subroutine integrator_proceed_position(deltat)
     use properties_module
     real(kind=8), intent(IN) :: deltat
-    position(:,1:num_molecule) = position(:,1:num_molecule) + velocity(:,1:num_molecule)*deltat
+    integer :: k
+    do k=1,num_monatom
+       call monatom_proceed_position(monatoms(k), deltat)
+    end do
   end subroutine integrator_proceed_position
 
 end module integrator_module
@@ -266,7 +535,7 @@ module settings_module
 
 contains
 
-  subroutine settings_init()
+  subroutine settings_init
     dt = 0.001
     num_loop = 1000000
     lasttime = 0.0d0
@@ -341,9 +610,8 @@ program main
   use interaction_module
   use settings_module
   use box_module
+  use system_module
   implicit none
-  !system constants
-  integer, parameter :: STDIN = 5, STDOUT = 6
   !local variables
   real(kind=8) :: ep, vir_ex
   integer      :: i
@@ -370,7 +638,9 @@ program main
      !calculate position
      call integrator_proceed_position(dt/2)
      !calculate force
+     call properties_preforce
      call interaction_calculate(ep, vir_ex)
+     call properties_postforce
      !calculate accel
      call properties_accel_from_force
      !calculate velocity

@@ -1,5 +1,5 @@
 PREV=100Modular
-TARGET=main scl
+TARGET=main gen_scl gen_2compo
 all: $(TARGET)
 #General rule to make FOO from FOO.f90.
 # % in rule line is the matching pattern for file name.
