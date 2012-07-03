@@ -159,6 +159,12 @@ contains
    end function properties_pressure
 
 
+   subroutine properties_scalevelocity(ratio)
+     real(kind=8), intent(IN) :: ratio
+     velocity(:,:) = velocity(:,:) * ratio
+   end subroutine properties_scalevelocity
+
+
    subroutine properties_done
      deallocate(position)
      deallocate(velocity)
@@ -287,17 +293,14 @@ contains
   end subroutine settings_write
 
 
-  subroutine settings_write_log(i, ep, vir_ex, filehandle)
+  subroutine settings_write_log(i, ep, ek, vir_ex, filehandle)
     use properties_module
     use box_module
     integer, intent(IN)          :: i, filehandle
-    real(kind=8), intent(IN)     :: ep, vir_ex
-    real(kind=8)                 :: ek
+    real(kind=8), intent(IN)     :: ep, vir_ex, ek
     real(kind=8)                 :: temperature, pressure
     ! Write not so frequently
     if ( log_interval > 0 .and. mod(i,log_interval) == 0 ) then
-       !calculate energies
-       ek = properties_kinetic_energy()
        temperature = properties_temperature(ek)
        ! 3NkbT = 2Ek
        if ( box(1) > 0.0 ) then
@@ -319,6 +322,54 @@ end module settings_module
 
 
 
+module berendsen_thermostat_module
+  implicit none
+  real(kind=8) :: tautemp     !time constant for dumping
+  real(kind=8) :: targettemp  !target temperature
+
+contains
+
+  subroutine berendsen_thermostat_init()
+    tautemp = -1
+  end subroutine berendsen_thermostat_init
+
+  subroutine berendsen_thermostat_read(tag, filehandle)
+    integer, intent(IN) :: filehandle
+    character(len=*), intent(IN) :: tag
+    if ( tag == "[BERET]" ) then
+       read(filehandle,*) targettemp, tautemp
+    endif
+  end subroutine berendsen_thermostat_read
+
+
+  subroutine berendsen_thermostat_proceed(deltat, temperature)
+    use properties_module
+    real(kind=8), intent(IN) :: deltat, temperature
+    !local variables
+    real(kind=8) :: diff, newtemp, ratio
+    if ( tautemp > 0d0 ) then
+       diff = targettemp - temperature
+       diff = diff / tautemp
+       newtemp = temperature + deltat * diff
+       ratio = sqrt(newtemp / temperature)
+       call properties_scalevelocity(ratio)
+    end if
+  end subroutine berendsen_thermostat_proceed
+
+
+  subroutine berendsen_thermostat_write(filehandle)
+    integer, intent(IN) :: filehandle
+    if ( tautemp > 0.0 ) then
+       write(filehandle,'("[BERET]")')
+       write(filehandle,*) targettemp, tautemp
+    end if
+  end subroutine berendsen_thermostat_write
+
+end module berendsen_thermostat_module
+  
+
+
+
 program main
   use physconst_module
   use properties_module
@@ -326,11 +377,12 @@ program main
   use force_module
   use settings_module
   use box_module
+  use berendsen_thermostat_module
   implicit none
   !system constants
   integer, parameter :: STDIN = 5, STDOUT = 6
   !local variables
-  real(kind=8) :: ep, vir_ex
+  real(kind=8) :: ep, vir_ex, ek, temperature
   integer      :: i
   character(len=1000) :: tag
   !default values
@@ -340,11 +392,13 @@ program main
   call integrator_init
   call force_init
   call settings_init
+  call berendsen_thermostat_init
   do
      read(STDIN,*,end=999) tag
      call properties_read(tag, STDIN)
      call settings_read(tag, STDIN)
      call box_read(tag, STDIN)
+     call berendsen_thermostat_read(tag, STDIN)
   end do
 999 continue
 
@@ -359,11 +413,16 @@ program main
      call properties_accel_from_force
      !calculate velocity
      call integrator_proceed_velocity(dt)
+     !kinetic energy
+     ek = properties_kinetic_energy()
+     temperature = properties_temperature(ek)
+     call berendsen_thermostat_proceed(dt, temperature)
      !calculate position
      call integrator_proceed_position(dt/2)
      ! logging
-     call settings_write_log(i, ep, vir_ex, STDOUT)
+     call settings_write_log(i, ep, ek, vir_ex, STDOUT)
   enddo
+  call berendsen_thermostat_write(STDOUT)
   call box_write(STDOUT)
   call settings_write(STDOUT)
   call properties_write(STDOUT)

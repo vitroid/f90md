@@ -1,4 +1,4 @@
-PREV=100Modular
+PREV=110Symplectic
 TARGET=main scl
 all: $(TARGET)
 #General rule to make FOO from FOO.f90.
