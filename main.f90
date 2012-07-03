@@ -59,14 +59,11 @@ module properties_module
   real(kind=8), allocatable :: accel(:,:)     ! Angstrom / ps**2
   real(kind=8), allocatable :: force(:,:)     ! N
   real(kind=8) :: mass                        ! atomic mass
-  real(kind=8) :: eps,sig                     ! kJ/mol, Angstrom
 
 contains
 
   subroutine properties_init
     mass = 39.95d0
-    eps = 0.99768d0
-    sig = 3.41d0
   end subroutine properties_init
 
 
@@ -95,8 +92,6 @@ contains
        enddo
     else if ( tag == "[ATOMMAS]" ) then
        read(filehandle,*) mass
-    else if ( tag == "[LJPARAM]" ) then
-       read(filehandle,*) eps,sig
     end if
   end subroutine properties_read
 
@@ -104,8 +99,6 @@ contains
   subroutine properties_write(filehandle)
     integer, intent(IN) :: filehandle
     integer :: i,j
-    write(filehandle,'("[LJPARAM]")')
-    write(filehandle,*) eps,sig
     write(filehandle,'("[ATOMMAS]")')
     write(filehandle,*) mass
     write(filehandle,'("[ATOMPOSVEL]")')
@@ -159,6 +152,9 @@ contains
    end function properties_pressure
 
 
+
+
+
    subroutine properties_done
      deallocate(position)
      deallocate(velocity)
@@ -170,16 +166,19 @@ end module properties_module
 
 
 
-module force_module
+module interaction_module
   implicit none
+  real(kind=8) :: eps,sig                     ! kJ/mol, Angstrom
 
 contains
 
-  subroutine force_init
-  end subroutine force_init
+  subroutine interaction_init
+    eps = 0.99768d0
+    sig = 3.41d0
+  end subroutine interaction_init
 
 
-  subroutine force_calculate(ep, vir_ex)
+  subroutine interaction_calculate(ep, vir_ex)
     use properties_module
     use box_module
     real(kind=8), intent(OUT):: ep,vir_ex
@@ -210,9 +209,25 @@ contains
        enddo
     enddo
     vir_ex = vir_ex / 3.0d0  ! W defined in Allen&Tildesley p.48
-  end subroutine force_calculate
+  end subroutine interaction_calculate
 
-end module force_module
+
+  subroutine interaction_read(tag, filehandle)
+    character(len=*), intent(IN) :: tag
+    integer, intent(IN)          :: filehandle
+    if ( tag == "[LJPARAM]" ) then
+       read(filehandle,*) eps,sig
+    end if
+  end subroutine interaction_read
+
+
+  subroutine interaction_write(filehandle)
+    integer, intent(IN) :: filehandle
+    write(filehandle,'("[LJPARAM]")')
+    write(filehandle,*) eps,sig
+  end subroutine interaction_write
+
+end module interaction_module
 
 
 
@@ -323,7 +338,7 @@ program main
   use physconst_module
   use properties_module
   use integrator_module
-  use force_module
+  use interaction_module
   use settings_module
   use box_module
   implicit none
@@ -338,13 +353,14 @@ program main
   call physconst_init
   call properties_init
   call integrator_init
-  call force_init
+  call interaction_init
   call settings_init
   do
      read(STDIN,*,end=999) tag
      call properties_read(tag, STDIN)
      call settings_read(tag, STDIN)
      call box_read(tag, STDIN)
+     call interaction_read(tag, STDIN)
   end do
 999 continue
 
@@ -354,7 +370,7 @@ program main
      !calculate position
      call integrator_proceed_position(dt/2)
      !calculate force
-     call force_calculate(ep, vir_ex)
+     call interaction_calculate(ep, vir_ex)
      !calculate accel
      call properties_accel_from_force
      !calculate velocity
@@ -367,6 +383,7 @@ program main
   call box_write(STDOUT)
   call settings_write(STDOUT)
   call properties_write(STDOUT)
+  call interaction_write(STDOUT)
   !deallocate arrays
   call properties_done
 end program main
