@@ -1,4 +1,4 @@
-PREV=100Modular
+PREV=130Mixture
 TARGET=main gen_scl gen_2compo
 all: $(TARGET)
 #General rule to make FOO from FOO.f90.

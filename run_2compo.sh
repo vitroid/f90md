@@ -16,6 +16,6 @@ cat <<EOF > test.input
 [LOGINTV]
 1000
 EOF
-./2compo >> test.input
+./gen_2compo >> test.input
 ./main < test.input
 

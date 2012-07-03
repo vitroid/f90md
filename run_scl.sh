@@ -11,6 +11,6 @@ cat <<EOF > test.input
 [LOGINTV]
 1000
 EOF
-./scl >> test.input
+./gen_scl >> test.input
 ./main < test.input
 
