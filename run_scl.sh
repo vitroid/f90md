@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cat <<EOF > 1compo.input
+cat <<EOF > @1compo.input
 [INTRPAIR]
 1 1 LJ
 0.99768d0 3.41d0
@@ -11,6 +11,6 @@ cat <<EOF > 1compo.input
 [LOGINTV]
 1000
 EOF
-./gen_scl >> 1compo.input
-./main < 1compo.input
+./gen_scl >> @1compo.input
+./main < @1compo.input
 
