@@ -61,19 +61,19 @@ end module physconst_module
 
 module monatom_module
   implicit none
-  type monatom
+  type monatom_type
      integer      :: num_molecule
      real(kind=8), pointer, dimension(:,:) :: position  ! Angstrom
      real(kind=8), pointer, dimension(:,:) :: velocity  ! Angstrom / ps
      real(kind=8), pointer, dimension(:,:) :: accel     ! Angstrom / ps**2
      real(kind=8), pointer, dimension(:,:) :: force     ! N
      real(kind=8) :: mass                        ! atomic mass
-  end type monatom
+  end type monatom_type
 
 contains
 
   subroutine monatom_allocate(m, nmol)
-    type(monatom), intent(OUT) :: m
+    type(monatom_type), intent(OUT) :: m
     integer, intent(IN) :: nmol
     m%num_molecule = nmol
     allocate(m%position(3,nmol))
@@ -84,7 +84,7 @@ contains
 
 
   subroutine monatom_done(m)
-    type(monatom), intent(INOUT) :: m
+    type(monatom_type), intent(INOUT) :: m
     deallocate(m%position)
     deallocate(m%velocity)
     deallocate(m%accel)
@@ -93,27 +93,27 @@ contains
 
 
   subroutine monatom_resetforce(m)
-    type(monatom), intent(INOUT) :: m
+    type(monatom_type), intent(INOUT) :: m
     m%force(:,:) = 0d0
   end subroutine monatom_resetforce
 
 
   subroutine monatom_proceed_velocity(m, deltat)
-    type(monatom), intent(INOUT) :: m
+    type(monatom_type), intent(INOUT) :: m
     real(kind=8), intent(IN) :: deltat
     m%velocity(:,1:m%num_molecule) = m%velocity(:,1:m%num_molecule) + m%accel(:,1:m%num_molecule)*deltat
   end subroutine monatom_proceed_velocity
 
 
   subroutine monatom_proceed_position(m, deltat)
-    type(monatom), intent(INOUT) :: m
+    type(monatom_type), intent(INOUT) :: m
     real(kind=8), intent(IN) :: deltat
     m%position(:,1:m%num_molecule) = m%position(:,1:m%num_molecule) + m%velocity(:,1:m%num_molecule)*deltat
   end subroutine monatom_proceed_position
 
 
   subroutine monatom_write(m,filehandle)
-    type(monatom), intent(IN) :: m
+    type(monatom_type), intent(IN) :: m
     integer, intent(IN) :: filehandle
     integer :: i,j
     write(filehandle,'("[ATOMMAS]")')
@@ -127,13 +127,13 @@ contains
 
 
   subroutine monatom_accel_from_force(m)
-    type(monatom), intent(INOUT) :: m
+    type(monatom_type), intent(INOUT) :: m
     m%accel(:,1:m%num_molecule) = m%force(:,1:m%num_molecule) / m%mass * 100.0
   end subroutine monatom_accel_from_force
 
 
   function monatom_kinetic_energy(m) result(ek)
-    type(monatom), intent(IN) :: m
+    type(monatom_type), intent(IN) :: m
     real(kind=8) :: ek
     integer      :: j
     ek = 0.0
@@ -149,14 +149,14 @@ contains
 
 
   function monatom_degree_of_freedom(m) result(dof)
-    type(monatom), intent(INOUT) :: m
+    type(monatom_type), intent(INOUT) :: m
     integer :: dof
     dof = m%num_molecule * 3
   end function monatom_degree_of_freedom
 
 
   subroutine monatom_read_atomposvel(m, filehandle)
-    type(monatom), intent(INOUT) :: m
+    type(monatom_type), intent(INOUT) :: m
     integer, intent(IN) :: filehandle
     integer :: i,j
     do i=1,m%num_molecule
@@ -166,7 +166,7 @@ contains
 
 
   subroutine monatom_read_atompos(m, filehandle)
-    type(monatom), intent(INOUT) :: m
+    type(monatom_type), intent(INOUT) :: m
     integer, intent(IN) :: filehandle
     integer :: i,j
     do i=1,m%num_molecule
@@ -182,7 +182,7 @@ module properties_module
   use monatom_module
   implicit none
   integer :: num_monatom
-  type(monatom) :: monatoms(100)
+  type(monatom_type) :: monatoms(100)
   character(len=256) :: label(100)
 contains
 
@@ -298,28 +298,28 @@ end module properties_module
 
 module lj_module
   implicit none
-  type lj
+  type lj_type
      real(kind=8) :: eps,sig                     ! kJ/mol, Angstrom
-  end type lj
+  end type lj_type
   
 contains
 
   subroutine lj_init(x)
-    type(lj), intent(OUT) :: x
+    type(lj_type), intent(OUT) :: x
     x%eps = 0.0
     x%sig = 0.0
   end subroutine lj_init
 
 
   function lj_is_available(x) result(logic)
-    type(lj), intent(OUT) :: x
+    type(lj_type), intent(OUT) :: x
     logical :: logic
     logic = x%eps /= 0.0
   end function lj_is_available
 
 
   subroutine lj_write(x, filehandle)
-    type(lj), intent(IN) :: x
+    type(lj_type), intent(IN) :: x
     integer, intent(IN) :: filehandle
     write(filehandle,'("[LJPARAM]")')
     write(filehandle,*) x%eps,x%sig
@@ -329,8 +329,8 @@ contains
   subroutine lj_calculate_homo(x, m, ep, vir_ex)
     use properties_module
     use box_module
-    type(lj), intent(IN) :: x
-    type(monatom), intent(INOUT) :: m
+    type(lj_type), intent(IN) :: x
+    type(monatom_type), intent(INOUT) :: m
     real(kind=8), intent(OUT):: ep,vir_ex
     real(kind=8)             :: delta(3),dd
     real(kind=8)             :: k
@@ -363,8 +363,8 @@ contains
   subroutine lj_calculate_hetero(x, m1, m2, ep, vir_ex)
     use properties_module
     use box_module
-    type(lj), intent(IN) :: x
-    type(monatom), intent(INOUT) :: m1,m2
+    type(lj_type), intent(IN) :: x
+    type(monatom_type), intent(INOUT) :: m1,m2
     real(kind=8), intent(OUT):: ep,vir_ex
     real(kind=8)             :: delta(3),dd
     real(kind=8)             :: k
@@ -395,7 +395,7 @@ contains
 
 
   subroutine lj_lorentz_berthelot_rule(lj1,lj2,eps,sig)
-    type(lj), intent(IN) :: lj1,lj2
+    type(lj_type), intent(IN) :: lj1,lj2
     real(kind=8), intent(OUT) :: eps, sig
     eps = sqrt(lj1%eps * lj2%eps)
     sig = (lj1%sig + lj2%sig)/2d0
@@ -408,7 +408,7 @@ end module lj_module
 module interaction_module
   use lj_module
   implicit none
-  type(lj) :: lj_pair(100,100)
+  type(lj_type) :: lj_pair(100,100)
 
 contains
 

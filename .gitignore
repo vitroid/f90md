@@ -1,5 +1,5 @@
 
-@
+@*
 
 main
 *.o
@@ -20,6 +20,3 @@ gen_2compo
 
 gen_scl
 
-1compo.input
-
-2compo.input
