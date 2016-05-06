@@ -1,0 +1,45 @@
+%------------------------------------------------------------
+\subsection{Usage of git}
+-%-----------------------------------------------------------
+There are many variants (branches) for the programs of f90md.  The section names of this document correspond to the branches.
+
+First of all, let us obtain all the source codes.  Open your terminal (Terminal.app on MacOS), and type the following command in some directory:
+%まずは、以下のコマンドでソースツリー(すべての枝)を取得して下さい。
+\begin{screen}
+\begin{verbatim}
+ git clone https://github.com/vitroid/f90md.git
+\end{verbatim}
+\end{screen}
+You will get the copy of the programs in f90md directory.
+%f90md/フォルダ以下に、プログラムがコピーされます。
+
+\begin{shadebox}
+    %====
+   Be careful not to modify the programs directly but to make  a copy for modification. % githubからcloneしたプログラムを書換えないようにして下さい。
+    %gitはあなたの書換えを尊重します。その結果、下記の方法でセクションを切り替える場合にも、
+    %あなたが書換えた部分を温存するために、checkoutを拒否する場合があります。
+    %書換えたい場合は、別のフォルダにさらにコピーしてそちらを変更するようにして下さい。
+    %====
+\end{shadebox}
+
+If you want to get the program explained in a section, type the following command in f90md directory:
+\begin{screen}
+\begin{verbatim}
+ git checkout sectionname
+\end{verbatim}
+\end{screen}
+
+For example, if you want to get the programs of 020TwoBodyLJ section, just type
+\begin{screen}
+\begin{verbatim}
+ git checkout 020TwoBodyLJ
+\end{verbatim}
+\end{screen}
+
+If you want to see the difference between the programs of the section and those of the previous section (e.g. 010TwoBody), type the following command.
+\begin{screen}
+\begin{verbatim}
+ git diff 010TwoBody
+\end{verbatim}
+\end{screen}
+It shows the change history.  The lines starting from ``+'' indicates that the line is added, and ``-'' is deletion.
