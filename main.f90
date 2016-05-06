@@ -351,16 +351,19 @@ program main
   !realistic interaction parameters for Argon.
   do i=1,num_loop
      lasttime = lasttime + dt
-     !calculate position
+     !Position Verlet
+     !See https://en.wikipedia.org/wiki/Verlet_integration
+     !calculate position at the future by dt/2
      call integrator_proceed_position(dt/2)
-     !calculate force
+     !calculate force at that time
      call force_calculate(ep, vir_ex)
-     !calculate accel
+     !calculate accel at that time
      call properties_accel_from_force
-     !calculate velocity
+     !calculate velocity at the future by dt
      call integrator_proceed_velocity(dt)
-     !calculate position
+     !calculate position at the future by dt (=dt/2+dt/2)
      call integrator_proceed_position(dt/2)
+     !Now both the position and the velocity are proceeded.
      ! logging
      call settings_write_log(i, ep, vir_ex, STDOUT)
   enddo
