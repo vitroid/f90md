@@ -422,9 +422,9 @@ program main
      !See https://en.wikipedia.org/wiki/Verlet_integration
      !calculate position at the future by dt/2
      call integrator_proceed_position(dt/2)
-     !calculate force at that time
+     !calculate force at the future by dt/2
      call interaction_calculate(ep, vir_ex)
-     !calculate accel at that time
+     !calculate accel at the future by dt/2
      call properties_accel_from_force
      !calculate velocity at the future by dt
      call integrator_proceed_velocity(dt)
