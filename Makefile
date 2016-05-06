@@ -10,3 +10,5 @@ clean:
 	rm $(TARGET) *~ *.o *.mod
 diff:
 	git diff -U5 --color $(PREV)
+update:
+	git merge --progress --verbose $(PREV)
