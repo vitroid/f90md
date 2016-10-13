@@ -1,5 +1,5 @@
 \documentclass[a4,10pt]{article}
-\usepackage{ascmac}
+\usepackage{bxascmac}
 \usepackage[a4paper, portrait, margin=2cm]{geometry}
 \parskip7pt
 \parindent0pt
@@ -54,6 +54,15 @@ The second equivalence in the equation indicates the Newton's third
 law, i.e. while one particle is pulled, the other
 particle is pushed by the force with the same strength but opposite direction.
 
+These equations can also be derived from the potential energy function of a spring by differentiation.
+\begin{eqnarray}
+V({\bf r}_1, {\bf r}_2) &=& \frac{k}{2}\left({\bf r}_1-{\bf
+    r}_2\right)^2\\
+{\bf F}_1&=& -\frac{\partial V}{\partial{\bf r}_1}\\
+&=&-k\left({\bf r}_1-{\bf r}_2\right)\\
+{\bf F}_2&=& -\frac{\partial V}{\partial{\bf r}_2}\\
+&=&-{\bf F}_1
+\end{eqnarray}
 
 %ところで、加速度は速度を時間で微分したもの
 Acceleration is a derivative of the velocity.
@@ -174,6 +183,34 @@ i.e. calculate the potential energy difference when a particle is
 moved at small amount to the axis directions.  The rate of change must
 be close to the components of the force vectors obtained as the derivative.
 \end{itembox}
+
+%------------------------------------------------------------
+\section{015Displaced}
+%------------------------------------------------------------
+
+The equations used in the previous section assume that the equilibrium
+(natural) distance between the two particles is zero.  However, the
+equilibrium length of the real spring is not zero but a finite value.
+So let us modify the formula for the more realistic spring.  This idea
+is also useful when the intramolecular covalent bond is represented
+with a spring with a finite natural length.
+
+The interaction potential becomes minimum when the two particles are in its natural length $L$.
+\begin{equation}
+V({\bf r}_1, {\bf r}_2) = \frac{k}{2}\left(\left|{\bf r}_1-{\bf r}_2\right| - L\right)^2.
+\end{equation}
+
+You get the force by differentiating the equation by the positions of
+the particles in the same way as the previous section.
+\begin{eqnarray}
+{\bf F}_1&=& -\frac{\partial V}{\partial{\bf r}_1}\\
+{\bf F}_2&=& -\frac{\partial V}{\partial{\bf r}_2}\\
+\end{eqnarray}
+
+\begin{itembox}[l]{Practice 2.5}
+Derive the equation of the force by performing differentiations above.
+\end{itembox}
+
 
 %------------------------------------------------------------
 \section{020TwoBodyLJ}

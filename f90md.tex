@@ -1,5 +1,5 @@
 \documentclass[a4,10pt]{article}
-\usepackage{ascmac}
+\usepackage{bxascmac}
 \usepackage[a4paper, portrait, margin=2cm]{geometry}
 \parskip7pt
 \parindent0pt
@@ -40,6 +40,16 @@ MDを自分で書いてみる人のために、サンプルを書いてみまし
 {\bf F}_1 = -k ({\bf r}_1- {\bf r}_2) = m_1 {\bf a}_1
 \end{equation}
 と書けます。力$\bf F$と位置$\bf r$と加速度$\bf a$はベクトルです。$k$はバネ定数です．作用反作用の法則により，もう一方の末端には逆向きの力が加わります．
+
+These equations can also be derived from the potential energy function of a spring by differentiation.
+\begin{eqnarray}
+V({\bf r}_1, {\bf r}_2) &=& \frac{k}{2}\left({\bf r}_1-{\bf
+    r}_2\right)^2\\
+{\bf F}_1&=& -\frac{\partial V}{\partial{\bf r}_1}\\
+&=&-k\left({\bf r}_1-{\bf r}_2\right)\\
+{\bf F}_2&=& -\frac{\partial V}{\partial{\bf r}_2}\\
+&=&-{\bf F}_1
+\end{eqnarray}
 
 ところで、加速度は速度を時間で微分したもの
 \begin{equation}
@@ -103,6 +113,32 @@ E_p(r)&=&kr^2/2\\
 \begin{itembox}[l]{練習問題2}
 実際に2つの物体(2次元でも3次元でも構わない。座標はてきとうに決める)の間に働くポテンシャルエネルギーと、物体の座標をわずかにずらした時のエネルギー変化から、上の式が正しいかどうかを検証するプログラムを書きましょう。
 \end{itembox}
+
+
+
+%------------------------------------------------------------
+\section{015Displaced}
+%------------------------------------------------------------
+
+The equations used in the previous section assume that the equilibrium (natural) distance between the two particles is zero.  However, the equilibrium length of the real spring is not zero but a finite value.  So let us modify the formula for the more realistic spring.  This idea is also useful when the intramolecular covalent bond is represented with a spring with a finite natural length.
+
+The interaction potential becomes minimum when the two particles are in its natural length $L$.
+\begin{equation}
+V({\bf r}_1, {\bf r}_2) = \frac{k}{2}\left(\left|{\bf r}_1-{\bf r}_2\right| - L\right)^2.
+\end{equation}
+
+You get the force by differentiating the equation by the positions of
+the particles in the same way as the previous section.
+\begin{eqnarray}
+{\bf F}_1&=& -\frac{\partial V}{\partial{\bf r}_1}\\
+{\bf F}_2&=& -\frac{\partial V}{\partial{\bf r}_2}\\
+\end{eqnarray}
+
+\begin{itembox}[l]{Practice 2.5}
+Derive the equation of the force by performing differentiations above.
+\end{itembox}
+
+
 
 %------------------------------------------------------------
 \section{020TwoBodyLJ}
@@ -345,8 +381,7 @@ If all you have is a hammer, everything looks like a nail.
 プログラムをモジュールに分割して、全体の見通しがよくなったところで、
 数値積分の方法を再考します。
 
-あらかじめサブルーチンに分けてあるので、書換えは非常に簡単です。
-
+ここではPosition Verletという方法を導入しました．もともとのプログラムでは，加速度，速度，座標の順で計算していましたが，これを座標をまず半分だけ進め，速度を進め，さらに座標を半分進めるという手順に変えます．こうすることで，誤差の蓄積を防ぐとともに，時間反転してもほぼ同じ軌道を辿る計算ができるようになります．このような計算手順のことをSymplectic Integrationと呼びます．
 
 
 %------------------------------------------------------------
