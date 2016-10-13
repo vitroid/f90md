@@ -34,6 +34,7 @@ program clustermd
   dt = 0.001
   mass = 1.0
   k = 1.0
+  L = 4.5
   num_loop = 100000
   do i=1,num_loop
      !calculate force
@@ -42,13 +43,15 @@ program clustermd
      dy = y(2) - y(1)
      dz = z(2) - z(1)
      dd = dx**2 + dy**2 + dz**2
-     ep = ep + k * dd / 2.0
-     fx(1) = +k * dx
-     fy(1) = +k * dy
-     fz(1) = +k * dz
-     fx(2) = -k * dx
-     fy(2) = -k * dy
-     fz(2) = -k * dz
+     !a spring with finite natural length
+     ep = ep + k * (dd**0.5 - L)**2 / 2.0
+     !Please check these differentiations carefully by yourself.
+     fx(1) = +k * (dd**0.5 - L) * (dx / dd**0.5)
+     fy(1) = +k * (dd**0.5 - L) * (dy / dd**0.5)
+     fz(1) = +k * (dd**0.5 - L) * (dz / dd**0.5)
+     fx(2) = -k * (dd**0.5 - L) * (dx / dd**0.5)
+     fy(2) = -k * (dd**0.5 - L) * (dy / dd**0.5)
+     fz(2) = -k * (dd**0.5 - L) * (dz / dd**0.5)
      !calculate accel
      do j=1,2
         ax(j) = fx(j) / mass
