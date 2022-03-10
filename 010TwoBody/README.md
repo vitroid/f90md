@@ -66,7 +66,7 @@ r(t+\Delta t) = r(t) + v(t) \Delta t
 
 ちゃんとプログラムが動いていて、物理法則にのっとった運動をしているかどうかを確認するには、エネルギー保存則をチェックするのが簡単です。この系の場合、ポテンシャルエネルギーはバネのエネルギー
 
-<img src="https://latex.codecogs.com/svg.image?
+<img src="https://latex.codecogs.com/svg.latex?
 \begin{equation}\label{eq:e_sp}
 E_p = k \left| r_1 - r_2 \right|^2 / 2
 \end{equation}
