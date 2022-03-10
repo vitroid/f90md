@@ -1,7 +1,3 @@
 # f90md -- Molecular Dynamics in fortran90
 
-MDを自分で書いてみる人のために、サンプルを書いてみました。
-
-最速なプログラムを書くのにはあまり役に立ちません。複雑な分子を扱うことも今のところできません。
-しかし、プログラムの書きはじめ方、コンパイルの仕方、プログラムの分割の方法、
-機能を追加する方法などの参考にはなるかと思います。
+This repository has moved to https://gitlab.com/vitroid/f90md just because the markdown in GitHub does not accept the latex notation of equations. Sorry for inconvenience.
