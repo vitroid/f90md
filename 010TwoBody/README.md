@@ -1,3 +1,8 @@
+<pre xml:lang="latex">\sqrt{2}</pre>
+```math
+SE = \frac{\sigma}{\sqrt{n}}
+```
+
 # 010TwoBody
 
 分子動力学法の最も単純な例として、質量1の2つの質点がバネ定数1のバネでつながれた系の
