@@ -16,7 +16,7 @@ SE = \frac{\sigma}{\sqrt{n}}
 
 バネの力は、2つの物体の相対座標で決まります。また、加速度は座標の時間での2回微分ですから、この式を物体のかたほうについてもっと具体的に書くと、
 
-<img src="https://latex.codecogs.com/svg.image?\begin{equation}{\bf F}_1 = -k ({\bf r}_1- {\bf r}_2) = m_1 {\bf a}_1 \end{equation}" />
+![](https://latex.codecogs.com/svg.image?\begin{equation}{\bf%20F}_1=-k({\bf%20r}_1-{\bf%20r}_2)=m_1{\bf%20a}_1\end{equation})
 
 と書けます。力$\bf F$と位置$\bf r$と加速度$\bf a$はベクトルです。$k$はバネ定数です．作用反作用の法則により，もう一方の末端には逆向きの力が加わります．
 
